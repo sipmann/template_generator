@@ -191,9 +191,9 @@ function registerJinjaAutocomplete(language) {
 
                     // variable output
                     {
-                        label: "{{ }}",
+                        label: "{% raw %}{{ }}{% endraw %}",
                         kind: monaco.languages.CompletionItemKind.Snippet,
-                        insertText: "{{ ${1:variable} }}",
+                        insertText: "{% raw %}{{ ${1:variable} }}{% endraw %}",
                         insertTextRules:
                             monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
                         range: range

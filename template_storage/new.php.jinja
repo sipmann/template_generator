@@ -1,0 +1,103 @@
+<?php
+
+include_once '../config.php';
+include_once '../utils/auth.php';
+
+function createRegistro(string $placa, string $dt_lancamento, $tipo, $valor, $fornecedor, $descricao) : int {
+    $con = Mysql::conn();
+    $stm = $con->prepare('INSERT INTO custos_externos (placa, dt_lancamento, tipo, valor, fornecedor, descricao) VALUES (?, ?, ?, ?, ?, ?)');
+
+    $stm->bind_param('ssssss', $placa, $dt_lancamento, $tipo, $valor, $fornecedor, $descricao);
+    $stm->execute();
+    return $stm->affected_rows;
+}
+
+$error = '';
+
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    if (!isset($_POST['placa']) || empty($_POST['placa'])) {
+        $error = '<b>placa</b> é obrigatória<br>';
+    }
+
+    if (!isset($_POST['dt_lancamento']) || empty($_POST['dt_lancamento'])) {
+        $error .= '<b>data</b> é obrigatória<br>';
+    }
+
+    if ($_POST['tipo'] != '0' && (!isset($_POST['tipo']) || empty($_POST['tipo']))) {
+        $error .= '<b>tipo</b> é obrigatório<br>';
+    }
+
+    if (empty($error)) {
+        $valor = str_replace(',', '.', str_replace('.', '', $_POST['valor'] ?? '0'));
+        $affectedRows = createRegistro($_POST['placa'], $_POST['dt_lancamento'], $_POST['tipo'], $valor, $_POST['fornecedor'], $_POST['descricao']);
+
+        flashMessage('success', $affectedRows > 0 ? 'Custo Externo cadastrado' : 'Algo de errado aconteceu!!');
+        redirect('/custos/index.php');
+    }
+}
+
+include_once '../Views/header.php'; 
+
+?>
+
+
+    <h1>Novo Custo Externo</h1>
+
+    <?php
+        if (isset($error) && !empty($error)) {
+    ?>
+    <div class="alert alert-danger" role="alert"><?=$error?></div>
+    <?php } ?>
+
+    <form method="POST">
+        <div class="mb-3">
+            <label for="placa" class="form-label">Placa</label>
+            <input type="hidden" class="form-control" name="placa" id="placa" value="<?=oldValue('placa', '')?>">
+            <input type="text" class="form-control" name="placa_desc" id="placa_desc" autofocus value="<?=oldValue('placa_desc', '')?>">
+            <div id="suggestions_placa" class="list-group"></div>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label for="dt_saida" class="form-label">Data</label>
+                <input type="date" class="form-control" name="dt_lancamento" id="dt_lancamento" value="<?=date("Y-m-d")?>">
+            </div>
+
+            <div class="col-md-4">
+                <label for="tipo" class="form-label">Tipo</label>
+                <select class="form-control" name="tipo" id="tipo">
+                    <option value="">Selecione</option>
+                    <option value="0">Cavalo</option>
+                    <option value="1">Implemento</option>
+                </select>
+            </div>
+
+            <div class="col-md-4">
+                <label for="valor" class="form-label">Valor</label>
+                <div class="input-group">
+                    <span class="input-group-text">R$</span>
+                    <input type="text" class="form-control" name="valor" id="valor" placeholder="0,00" value="<?=oldValue('valor', '')?>">
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-3" style="margin-top:15px">
+            <label for="fornecedor" class="form-label">Fornecedor</label>
+            <input type="text" class="form-control" name="fornecedor" id="fornecedor" value="<?=oldValue('fornecedor', '')?>">
+        </div>
+
+        <div class="mb-3" style="margin-top:15px">
+            <label for="fornecedor" class="form-label">Descrição</label>
+            <textarea class="form-control" rows="4" name="descricao"><?=oldValue('descricao', '')?></textarea>
+        </div>
+        
+        <button type="submit" class="btn btn-info">Salvar</button>
+        <a href="<?=url('/custos/index.php');?>" class="btn btn-warning">Cancelar</a>
+    </form>
+    
+
+<script>
+    addAutoComplete('placa_desc', 'placa', 'suggestions_placa', "<?=url('/veiculos/autocomplete.php')?>");
+</script>
+
+<?php include_once '../Views/footer.php'; ?>
