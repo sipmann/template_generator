@@ -61,6 +61,7 @@ generator_env = Environment(
     loader=FileSystemLoader(TEMPLATE_STORAGE),
     trim_blocks=True,
     lstrip_blocks=True,
+    extensions=["jinja2.ext.loopcontrols"],
 )
 
 
