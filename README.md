@@ -6,3 +6,4 @@ From time to time I have a simple CRUD to make, with small changes between them.
 
 - [ ] Columns without PK (for less code in the template)
 - [ ] Snake_Case strings to proper Titles
+- [ ] Template Folder structure for better organization
