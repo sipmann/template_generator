@@ -1,22 +1,68 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-br">
 <head>
-<title>CRUD Generator</title>
-<meta charset="utf-8">
+    <title>CRUD Generator</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 </head>
-<body>
 
-<h1>CRUD Generator</h1>
+<body class="bg-gray-100 min-h-screen flex flex-col">
 
-<nav>
-<a href="/">Generator</a> |
-<a href="/templates">Templates</a>
-</nav>
+    <!-- Topbar -->
+    <header class="bg-white border-b shadow-sm">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
 
-<hr>
+            <div class="flex items-center gap-3">
+                <div class="bg-blue-600 text-white font-bold px-3 py-1 rounded-lg">
+                    CG
+                </div>
+                <h1 class="text-xl font-semibold text-gray-800">
+                    CRUD Generator
+                </h1>
+            </div>
 
-{% block content %}
-{% endblock %}
+            <nav class="flex items-center gap-6 text-sm font-medium">
+
+                <a href="/"
+                   class="text-gray-600 hover:text-blue-600 transition">
+                    Generator
+                </a>
+
+                <a href="/templates"
+                   class="text-gray-600 hover:text-blue-600 transition">
+                    Templates
+                </a>
+
+            </nav>
+
+        </div>
+    </header>
+
+
+    <!-- Content -->
+    <main class="flex-1">
+
+        <div class="max-w-7xl mx-auto px-6 py-8">
+
+            <div class="bg-white rounded-xl shadow-sm border p-6">
+
+                {% block content %}
+                {% endblock %}
+
+            </div>
+
+        </div>
+
+    </main>
+
+
+    <!-- Footer -->
+    <footer class="bg-white border-t text-center text-sm text-gray-500 py-4">
+        CRUD Generator • Powered by Flask + Jinja + Monaco
+    </footer>
+
 
 </body>
 </html>
