@@ -2,42 +2,99 @@
 
 {% block content %}
 
-<form method="post">
+<div class="space-y-6">
 
-<select name="template">
+    <!-- Header -->
+    <div>
+        <h2 class="text-2xl font-semibold text-gray-800">
+            Gerador de CRUD
+        </h2>
+        <p class="text-gray-500 text-sm mt-1">
+            Cole o CREATE TABLE e gere o template automaticamente.
+        </p>
+    </div>
 
-{% for t in templates %}
-<option value="{{ t }}">{{ t }}</option>
-{% endfor %}
 
-</select>
+    <!-- Form -->
+    <form method="post" class="space-y-6">
 
-<br><br>
+        <!-- Template select -->
+        <div class="space-y-2">
 
-<textarea name="sql" rows="12" cols="80">
-CREATE TABLE clientes (
+            <label class="block text-sm font-medium text-gray-700">
+                Template
+            </label>
+
+            <select name="template"
+                    class="w-full max-w-md px-3 py-2 border rounded-lg
+                           bg-white text-gray-800
+                           focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+
+                {% for t in templates %}
+                <option value="{{ t }}">{{ t }}</option>
+                {% endfor %}
+
+            </select>
+
+        </div>
+
+
+        <!-- SQL textarea -->
+        <div class="space-y-2">
+
+            <label class="block text-sm font-medium text-gray-700">
+                SQL (CREATE TABLE)
+            </label>
+
+            <textarea name="sql"
+                      rows="12"
+                      class="w-full font-mono text-sm px-4 py-3 border rounded-lg
+                             focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >CREATE TABLE clientes (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     nome TEXT NOT NULL,
     email TEXT,
     idade INTEGER
-);
-</textarea>
+);</textarea>
 
-<br><br>
-
-<button type="submit">
-Gerar HTML
-</button>
-
-</form>
+        </div>
 
 
-{% if generated %}
+        <!-- Submit -->
+        <div>
 
-<h2>Resultado</h2>
+            <button type="submit"
+                    class="bg-blue-600 hover:bg-blue-700 text-white font-medium
+                           px-6 py-2 rounded-lg shadow-sm transition">
 
-<textarea rows="25" cols="100">{{ generated }}</textarea>
+                Gerar HTML
 
-{% endif %}
+            </button>
+
+        </div>
+
+    </form>
+
+
+    <!-- Result -->
+    {% if generated %}
+
+    <div class="space-y-2 pt-6 border-t">
+
+        <h3 class="text-lg font-semibold text-gray-800">
+            Resultado gerado
+        </h3>
+
+        <textarea rows="20"
+                  class="w-full font-mono text-sm px-4 py-3 border rounded-lg
+                         bg-gray-50 focus:outline-none"
+                  readonly>{{ generated }}</textarea>
+
+    </div>
+
+    {% endif %}
+
+
+</div>
 
 {% endblock %}

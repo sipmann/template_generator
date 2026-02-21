@@ -2,21 +2,71 @@
 
 {% block content %}
 
-<h2>Editando {{ name }}</h2>
+<div class="space-y-6">
 
-<form method="post" onsubmit="saveEditor()">
+    <!-- Header -->
+    <div class="flex items-center justify-between">
 
-<div id="editor" style="height:600px;border:1px solid #ccc;"></div>
+        <div>
+            <h2 class="text-2xl font-semibold text-gray-800">
+                Editar Template
+            </h2>
 
-<textarea name="content" id="content" hidden></textarea>
+            <p class="text-sm text-gray-500 mt-1 font-mono">
+                {{ name }}
+            </p>
+        </div>
 
-<br><br>
+        <div class="flex gap-2">
 
-<button type="submit">
-Salvar
-</button>
+            <a href="/templates"
+               class="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50 transition">
+                Voltar
+            </a>
 
-</form>
+            <button form="editor-form"
+                    type="submit"
+                    class="bg-blue-600 hover:bg-blue-700 text-white
+                           px-4 py-2 rounded-lg shadow-sm transition">
+                Salvar
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- Editor container -->
+    <form method="post"
+          id="editor-form"
+          onsubmit="saveEditor()"
+          class="space-y-4">
+
+        <div class="border rounded-xl overflow-hidden shadow-sm">
+
+            <!-- Editor toolbar -->
+            <div class="bg-gray-50 border-b px-4 py-2 flex items-center justify-between">
+
+                <div class="text-sm text-gray-600">
+                    Monaco Editor
+                </div>
+
+                <div class="text-xs text-gray-400 font-mono">
+                    {{ name }}
+                </div>
+
+            </div>
+
+            <!-- Monaco editor -->
+            <div id="editor" class="h-[600px]"></div>
+
+        </div>
+
+        <textarea name="content" id="content" hidden></textarea>
+
+    </form>
+
+</div>
 
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/loader.min.js"></script>
@@ -41,6 +91,9 @@ function detectLanguage(filename) {
 
     if (filename.endsWith(".py") || filename.endsWith(".py.jinja"))
         return "python"
+
+    if (filename.endsWith(".sql") || filename.endsWith(".sql.jinja"))
+        return "sql"
 
     return "plaintext"
 }
@@ -69,6 +122,16 @@ require(["vs/editor/editor.main"], function () {
 
         fontSize: 14,
 
+        lineHeight: 20,
+
+        padding: {
+            top: 12
+        },
+
+        roundedSelection: true,
+
+        scrollBeyondLastLine: false,
+
         minimap: {
             enabled: false
         }
@@ -79,12 +142,14 @@ require(["vs/editor/editor.main"], function () {
 
 });
 
+
 function saveEditor() {
 
     document.getElementById("content").value =
         editor.getValue();
 
 }
+
 
 function registerJinjaAutocomplete(language) {
 
@@ -106,7 +171,6 @@ function registerJinjaAutocomplete(language) {
             return {
                 suggestions: [
 
-                    // table
                     {
                         label: "table",
                         kind: monaco.languages.CompletionItemKind.Variable,
@@ -114,7 +178,6 @@ function registerJinjaAutocomplete(language) {
                         range: range
                     },
 
-                    // columns loop
                     {
                         label: "columns",
                         kind: monaco.languages.CompletionItemKind.Variable,
@@ -126,15 +189,14 @@ function registerJinjaAutocomplete(language) {
                         label: "for column in columns",
                         kind: monaco.languages.CompletionItemKind.Snippet,
                         insertText:
-`{% for column in columns %}
+`{% raw %}{% for column in columns %}
     {{ column.name }}
-{% endfor %}`,
+{% endfor %}{% endraw %}`,
                         insertTextRules:
                             monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
                         range: range
                     },
 
-                    // column.name
                     {
                         label: "column.name",
                         kind: monaco.languages.CompletionItemKind.Field,
@@ -163,35 +225,20 @@ function registerJinjaAutocomplete(language) {
                         range: range
                     },
 
-                    // if snippet
                     {
                         label: "if",
                         kind: monaco.languages.CompletionItemKind.Snippet,
                         insertText:
-`{% if condition %}
+`{% raw %}{% if condition %}
     
-{% endif %}`,
+{% endif %}{% endraw %}`,
                         insertTextRules:
                             monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
                         range: range
                     },
 
-                    // for snippet
                     {
-                        label: "for",
-                        kind: monaco.languages.CompletionItemKind.Snippet,
-                        insertText:
-`{% for item in list %}
-    
-{% endfor %}`,
-                        insertTextRules:
-                            monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
-                        range: range
-                    },
-
-                    // variable output
-                    {
-                        label: "{% raw %}{{ }}{% endraw %}",
+                        label: "jinja variable",
                         kind: monaco.languages.CompletionItemKind.Snippet,
                         insertText: "{% raw %}{{ ${1:variable} }}{% endraw %}",
                         insertTextRules:

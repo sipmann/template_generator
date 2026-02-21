@@ -2,20 +2,69 @@
 
 {% block content %}
 
-<h2>Novo Template</h2>
+<div class="max-w-xl space-y-6">
 
-<form method="post">
+    <!-- Header -->
+    <div>
+        <h2 class="text-2xl font-semibold text-gray-800">
+            Novo Template
+        </h2>
 
-Nome:
+        <p class="text-sm text-gray-500 mt-1">
+            Crie um novo template Jinja para geração de código.
+        </p>
+    </div>
 
-<input name="name" placeholder="crud.html.jinja">
 
-<br><br>
+    <!-- Form -->
+    <form method="post" class="space-y-4">
 
-<button type="submit">
-Criar
-</button>
+        <!-- Input -->
+        <div class="space-y-2">
 
-</form>
+            <label class="block text-sm font-medium text-gray-700">
+                Nome do template
+            </label>
+
+            <input
+                name="name"
+                placeholder="crud.html.jinja"
+                required
+                class="w-full px-4 py-2 border rounded-lg
+                       focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+                       font-mono text-sm"
+            >
+
+            <p class="text-xs text-gray-400">
+                Exemplos: crud.html.jinja, crud.php.jinja, crud.sql.jinja
+            </p>
+
+        </div>
+
+
+        <!-- Actions -->
+        <div class="flex items-center gap-3 pt-2">
+
+            <button type="submit"
+                    class="bg-blue-600 hover:bg-blue-700 text-white
+                           px-5 py-2 rounded-lg shadow-sm transition">
+
+                Criar Template
+
+            </button>
+
+            <a href="/templates"
+               class="px-5 py-2 border rounded-lg
+                      text-gray-700 hover:bg-gray-50 transition">
+
+                Cancelar
+
+            </a>
+
+        </div>
+
+    </form>
+
+</div>
 
 {% endblock %}

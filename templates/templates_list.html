@@ -2,34 +2,100 @@
 
 {% block content %}
 
-<h2>Templates</h2>
+<div class="space-y-6">
 
-<a href="/templates/new">
-<button>Novo Template</button>
-</a>
+    <!-- Header -->
+    <div class="flex items-center justify-between">
 
-<br><br>
+        <div>
+            <h2 class="text-2xl font-semibold text-gray-800">
+                Templates
+            </h2>
 
-<table border="1">
+            <p class="text-sm text-gray-500 mt-1">
+                Gerencie os templates disponíveis para geração de código.
+            </p>
+        </div>
 
-<tr>
-<th>Nome</th>
-<th>Ações</th>
-</tr>
+        <a href="/templates/new"
+           class="bg-blue-600 hover:bg-blue-700 text-white
+                  px-4 py-2 rounded-lg shadow-sm transition text-sm font-medium">
 
-{% for file in files %}
+            Novo Template
 
-<tr>
-<td>{{ file }}</td>
+        </a>
 
-<td>
-<a href="/templates/edit/{{ file }}">Editar</a>
-</td>
+    </div>
 
-</tr>
 
-{% endfor %}
+    <!-- Table -->
+    <div class="bg-white border rounded-xl shadow-sm overflow-hidden">
 
-</table>
+        <table class="w-full text-sm">
+
+            <!-- Head -->
+            <thead class="bg-gray-50 border-b">
+
+                <tr>
+
+                    <th class="text-left px-4 py-3 font-medium text-gray-600">
+                        Nome
+                    </th>
+
+                    <th class="text-right px-4 py-3 font-medium text-gray-600 w-32">
+                        Ações
+                    </th>
+
+                </tr>
+
+            </thead>
+
+
+            <!-- Body -->
+            <tbody class="divide-y">
+
+                {% for file in files %}
+
+                <tr class="hover:bg-gray-50 transition">
+
+                    <td class="px-4 py-3 font-mono text-gray-800">
+                        {{ file }}
+                    </td>
+
+                    <td class="px-4 py-3 text-right">
+
+                        <a href="/templates/edit/{{ file }}"
+                           class="text-blue-600 hover:text-blue-800 font-medium text-sm">
+
+                            Editar
+
+                        </a>
+
+                    </td>
+
+                </tr>
+
+                {% else %}
+
+                <tr>
+
+                    <td colspan="2"
+                        class="px-4 py-6 text-center text-gray-400">
+
+                        Nenhum template encontrado.
+
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
 
 {% endblock %}
