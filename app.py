@@ -85,7 +85,7 @@ def index():
         generated = template.render(
             table=table,
             columns=columns,
-            columns_no_pk=filter_out_ok(columns),
+            #columns_no_pk=filter_out_ok(columns),
             map_type=map_type
         )
 
