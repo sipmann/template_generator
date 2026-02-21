@@ -1,0 +1,222 @@
+<?php
+
+include_once '../config.php';
+include_once '../utils/auth.php';
+
+$con = Mysql::conn();
+
+$itemsPerPage = 10; // Número de itens por página
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1; // Página atual
+$offset = ($page - 1) * $itemsPerPage; // Cálculo do deslocamento
+
+$dt_de = '';
+$dt_ate = '';
+$tipo = '';
+$placa = '';
+$placa_desc = '';
+
+$whereDt = '';
+$paginacao = '';
+
+if (isset($_GET['dt_de']) && !empty($_GET['dt_de'])) {
+    $dt_de = $_GET['dt_de'];
+    $paginacao .= '&dt_de=' . $dt_de;
+    $whereDt .= " AND custos_externos.dt_lancamento >= '" . $con->real_escape_string($dt_de) . "'";
+}
+
+if (isset($_GET['dt_ate']) && !empty($_GET['dt_ate'])) {
+    $dt_ate = $_GET['dt_ate'];
+    $paginacao .= '&dt_ate=' . $dt_ate;
+    $whereDt .= " AND custos_externos.dt_lancamento <= '" . $con->real_escape_string($dt_ate) . "'";
+}
+
+if (isset($_GET['tipo']) && ($_GET['tipo'] == '0' || !empty($_GET['tipo']))) {
+    $tipo = $_GET['tipo'];
+    $paginacao .= '&tipo=' . $tipo;
+    $whereDt .= " AND custos_externos.tipo = '" . $con->real_escape_string($tipo) . "'";
+}
+
+if (isset($_GET['placa']) && !empty($_GET['placa'])) {
+    $placa = $_GET['placa'];
+    $placa_desc = $_GET['placa_desc'];
+    $paginacao .= '&placa=' . $placa;
+    $paginacao .= '&placa_desc=' . $placa_desc;
+    $whereDt .= " AND custos_externos.placa = '" . $con->real_escape_string($placa) . "'";
+}
+
+if (!empty($whereDt)) {
+    $whereDt = ' WHERE 1=1 ' . $whereDt;
+}
+
+// Contar o número total de registros
+$totalPages = totalPages('{{table}}', $itemsPerPage);
+
+$stm = $con->prepare('SELECT {{table}}.*
+            FROM {{table}}
+            ' . $whereDt . '
+            ORDER BY {{table}}.id DESC
+            LIMIT ? OFFSET ?');
+
+$stm->bind_param('ii', $itemsPerPage, $offset);
+$stm->execute();
+$dados = $stm->get_result()->fetch_all(MYSQLI_ASSOC);
+
+include_once '../Views/header.php'; 
+?>
+
+<h1>{{table}}</h1>
+
+    <?php
+        $success = flashMessage('success');
+        if (isset($success) && !empty($success)) {
+    ?>
+    <div class="alert alert-success" role="alert"><?=$success?></div>
+    <?php } ?>
+
+    <?php
+        $error = flashMessage('error');
+        if (isset($error) && !empty($error)) {
+    ?>
+    <div class="alert alert-danger" role="alert"><?=$error?></div>
+    <?php } ?>
+
+    <?php if (isAdmin()) {?>
+    <a href="<?=url("/{{table}}/novo.php");?>" class="btn btn-info">Novo {{table}}</a>
+    <?php } ?>
+    
+    <h3>Filtros</h3>
+    <form action="" method="get" style="margin-bottom: 25px;">
+        <div class="row g-3">
+            <div class="col-md-2">
+                <label for="dt_de" class="form-label">Data Inicial</label>
+                <input type="date" class="form-control" name="dt_de" value="<?=$dt_de?>">
+            </div>
+
+            <div class="col-md-2">
+                <label for="dt_ate" class="form-label">Data Final</label>
+                <input type="date" class="form-control" name="dt_ate" value="<?=$dt_ate?>">
+            </div>
+
+            <div class="col-md-2">
+                <label for="tipo" class="form-label">Tipo</label>
+                <select class="form-control" name="tipo" id="tipo">
+                    <option value="">Selecione</option>
+                    <option value="0" <?=($tipo === '0') ? 'selected' : ''?>>Cavalo</option>
+                    <option value="1" <?=($tipo === '1') ? 'selected' : ''?>>Implemento</option>
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <label for="item" class="form-label">Placa</label>
+                <input type="hidden" class="form-control" name="placa" id="placa" value="<?=$placa?>">
+                <input type="text" class="form-control" name="placa_desc" id="placa_desc" value="<?=$placa_desc?>">
+                <div id="suggestions_placa" class="list-group"></div>
+            </div>
+
+            <div class="col-md-2" style="padding-top: 32px;">
+                <button type="submit" class="btn btn-info">Filtrar</button>
+            </div>
+        </div>
+    </form>
+
+    <div class="table-responsive">
+        <table class="table" style="margin-top:15px">
+            <thead>
+                <tr>
+                    <th scope="col">#</th>
+                    {% for column in columns %}
+                    {% if column.pk %} {% continue %} {% endif %}
+                    <th scope="col">{{column.name}}</th>
+                    {% endfor %}
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach($dados as $dado) { ?>
+                <tr>
+                    <th scope="row"><?=$dado['id'];?></th>
+                    <td><?=formatDate($dado['dt_lancamento']);?></td>
+                    <td><?=translate_tipo($dado['tipo']);?></td>
+                    <td><?=$dado['placa_veiculo'];?></td>
+                    <td>R$ <?=formatarNumeroPTBR($dado['valor']);?></td>
+                    <td><?=$dado['fornecedor'];?></td>
+                    <td style="text-align: right;">
+                        <a href="<?=url('/{{table}}/editar.php?id=' . $dado['id'])?>" class="btn btn-info">Editar</a>
+                        <a onclick="deletar(<?=$dado['id']?>);" class="btn btn-danger">Excluir</a>
+                    </td>
+                </tr>
+                <?php } ?>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Paginação -->
+    <nav aria-label="Page navigation">
+        <ul class="pagination justify-content-center">
+            <?php
+            // Define o intervalo de páginas a serem exibidas
+            $maxPagesToShow = 5;
+            $start = max(1, $page - 2);
+            $end = min($totalPages, $page + 2);
+
+            if ($page > 1): ?>
+                <li class="page-item">
+                    <a class="page-link" href="?page=<?= $page - 1 ?><?= $paginacao ?>" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+            <?php endif; ?>
+
+            <!-- Exibe reticências à esquerda, se necessário -->
+            <?php if ($start > 1): ?>
+                <li class="page-item">
+                    <a class="page-link" href="?page=1<?= $paginacao ?>">1</a>
+                </li>
+                <?php if ($start > 2): ?>
+                    <li class="page-item disabled">
+                        <span class="page-link">...</span>
+                    </li>
+                <?php endif; ?>
+            <?php endif; ?>
+
+            <!-- Exibe as páginas dentro do intervalo -->
+            <?php for ($i = $start; $i <= $end; $i++): ?>
+                <li class="page-item <?= ($i == $page) ? 'active' : '' ?>">
+                    <a class="page-link" href="?page=<?= $i ?><?= $paginacao ?>"><?= $i ?></a>
+                </li>
+            <?php endfor; ?>
+
+            <!-- Exibe reticências à direita, se necessário -->
+            <?php if ($end < $totalPages): ?>
+                <?php if ($end < $totalPages - 1): ?>
+                    <li class="page-item disabled">
+                        <span class="page-link">...</span>
+                    </li>
+                <?php endif; ?>
+                <li class="page-item">
+                    <a class="page-link" href="?page=<?= $totalPages ?><?= $paginacao ?>"><?= $totalPages ?></a>
+                </li>
+            <?php endif; ?>
+
+            <?php if ($page < $totalPages): ?>
+                <li class="page-item">
+                    <a class="page-link" href="?page=<?= $page + 1 ?><?= $paginacao ?>" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+            <?php endif; ?>
+        </ul>
+    </nav>
+
+<script>
+    function deletar(id) {
+        if (!confirm('Deseja realmente excluir?'))
+            return;
+
+        window.location.href = `<?=url('/{{table}}/excluir.php?id=')?>${id}`;
+    }
+
+    addAutoComplete('placa_desc', 'placa', 'suggestions_placa', "<?=url('/veiculos/autocomplete.php')?>");
+</script>
+
+<?php include_once '../Views/footer.php'; ?>

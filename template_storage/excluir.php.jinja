@@ -1,0 +1,15 @@
+<?php
+
+include_once '../config.php';
+include_once '../utils/auth.php';
+
+$id = $_GET['id'];
+
+$con = Mysql::conn();
+$stm = $con->prepare('DELETE FROM {{table}} WHERE id = ?');
+$stm->bind_param('s', $id);
+$stm->execute();
+$affectedRows = $stm->affected_rows;
+
+flashMessage('success', $affectedRows > 0 ? '{{table}} removido' : 'Algo de errado aconteceu!!');
+redirect('/{{table}}/index.php');

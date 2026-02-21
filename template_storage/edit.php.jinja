@@ -1,0 +1,89 @@
+<?php
+
+include_once '../config.php';
+include_once '../utils/auth.php';
+
+$id = $_GET['id'];
+
+$con = Mysql::conn();
+$stm = $con->prepare('SELECT {{table}}.*
+                    FROM {{table}}
+                    WHERE {{table}}.id = ?');
+$stm->bind_param('s', $id);
+$stm->execute();
+$dado = $stm->get_result()->fetch_assoc();
+
+function editRegistro(string $id, string $dt, string $valor, string $fornecedor, string $descricao) : int {
+    $con = Mysql::conn();
+    $stm = $con->prepare('UPDATE {{table}} SET dt = ?, valor = ?, fornecedor = ?, descricao = ? WHERE id = ?');
+
+    $stm->bind_param('sssss',  $dt, $valor, $fornecedor, $descricao, $id);
+    $stm->execute();
+    return $stm->affected_rows;
+}
+
+$error = '';
+
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    if ($_POST['dt'] != '0' &&  (!isset($_POST['dt']) || empty($_POST['dt']))) {
+        $error = '<b>data</b> é obrigatória<br>';
+    }
+    if ($_POST['valor'] != '0' &&  (!isset($_POST['valor']) || empty($_POST['valor']))) {
+        $error = '<b>valor</b> é obrigatória<br>';
+    }
+    if ($_POST['fornecedor'] != '0' &&  (!isset($_POST['fornecedor']) || empty($_POST['fornecedor']))) {
+        $error = '<b>fornecedor</b> é obrigatória<br>';
+    }
+
+    if (empty($error)) {
+        $valor = str_replace(',', '.', str_replace('.', '', $_POST['valor'] ?? '0'));
+        $affectedRows = editRegistro($_POST['id'], $_POST['dt'], $valor, $_POST['fornecedor'], $_POST['descricao']);
+
+        flashMessage('success', $affectedRows > 0 ? '{{table}} editado' : 'Algo de errado aconteceu!!');
+        redirect('/{{table}}/index.php');
+    }
+}
+
+include_once '../Views/header.php'; 
+
+?>
+
+    <h1>Editar {{table}}</h1>
+
+    <?php
+        if (isset($error) && !empty($error)) {
+    ?>
+    <div class="alert alert-danger" role="alert"><?=$error?></div>
+    <?php } ?>
+
+    <form method="POST">
+        <input type="hidden" name="id" value="<?=$id?>">
+
+        <div class="mb-3">
+            <label for="dt" class="form-label">Data</label>
+            <input type="date" class="form-control" name="dt" id="dt" value="<?=$dado['dt']?>">
+        </div>
+
+        <div class="mb-3">
+            <label for="valor" class="form-label">Valor</label>
+            <div class="input-group">
+                <span class="input-group-text">R$</span>
+                <input type="text" class="form-control" name="valor" id="valor" placeholder="0,00" value="<?=formatarNumeroPTBR($dado['valor'])?>">
+            </div>
+        </div>
+
+        <div class="mb-3" style="margin-top:15px">
+            <label for="fornecedor" class="form-label">Fornecedor</label>
+            <input type="text" class="form-control" name="fornecedor" id="fornecedor" value="<?=$dado['fornecedor']?>">
+        </div>
+
+        <div class="mb-3" style="margin-top:15px">
+            <label for="fornecedor" class="form-label">Descrição</label>
+            <textarea class="form-control" rows="4" name="descricao"><?=$dado['descricao']?></textarea>
+        </div>
+        
+        <button type="submit" class="btn btn-info">Salvar</button>
+        <a href="<?=url('/{{table}}/index.php');?>" class="btn btn-warning">Cancelar</a>
+    </form>
+
+    <?php include_once '../Views/footer.php'; ?>
