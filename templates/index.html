@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<form method="post">
+
+<select name="template">
+
+{% for t in templates %}
+<option value="{{ t }}">{{ t }}</option>
+{% endfor %}
+
+</select>
+
+<br><br>
+
+<textarea name="sql" rows="12" cols="80">
+CREATE TABLE clientes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nome TEXT NOT NULL,
+    email TEXT,
+    idade INTEGER
+);
+</textarea>
+
+<br><br>
+
+<button type="submit">
+Gerar HTML
+</button>
+
+</form>
+
+
+{% if generated %}
+
+<h2>Resultado</h2>
+
+<textarea rows="25" cols="100">{{ generated }}</textarea>
+
+{% endif %}
+
+{% endblock %}

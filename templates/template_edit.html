@@ -1,0 +1,213 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h2>Editando {{ name }}</h2>
+
+<form method="post" onsubmit="saveEditor()">
+
+<div id="editor" style="height:600px;border:1px solid #ccc;"></div>
+
+<textarea name="content" id="content" hidden></textarea>
+
+<br><br>
+
+<button type="submit">
+Salvar
+</button>
+
+</form>
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/loader.min.js"></script>
+
+<script>
+
+function detectLanguage(filename) {
+
+    filename = filename.toLowerCase()
+
+    if (filename.endsWith(".php") || filename.endsWith(".php.jinja"))
+        return "php"
+
+    if (filename.endsWith(".html") || filename.endsWith(".html.jinja"))
+        return "html"
+
+    if (filename.endsWith(".js") || filename.endsWith(".js.jinja"))
+        return "javascript"
+
+    if (filename.endsWith(".css") || filename.endsWith(".css.jinja"))
+        return "css"
+
+    if (filename.endsWith(".py") || filename.endsWith(".py.jinja"))
+        return "python"
+
+    return "plaintext"
+}
+
+require.config({
+    paths: {
+        vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs'
+    }
+});
+
+let editor;
+
+require(["vs/editor/editor.main"], function () {
+
+    const language = detectLanguage("{{ name }}");
+
+    editor = monaco.editor.create(document.getElementById('editor'), {
+
+        value: {{ content|tojson }},
+
+        language: language,
+
+        theme: "vs-dark",
+
+        automaticLayout: true,
+
+        fontSize: 14,
+
+        minimap: {
+            enabled: false
+        }
+
+    });
+
+    registerJinjaAutocomplete(language);
+
+});
+
+function saveEditor() {
+
+    document.getElementById("content").value =
+        editor.getValue();
+
+}
+
+function registerJinjaAutocomplete(language) {
+
+    monaco.languages.registerCompletionItemProvider(language, {
+
+        triggerCharacters: ["{", ".", " "],
+
+        provideCompletionItems: function (model, position) {
+
+            const word = model.getWordUntilPosition(position);
+
+            const range = {
+                startLineNumber: position.lineNumber,
+                endLineNumber: position.lineNumber,
+                startColumn: word.startColumn,
+                endColumn: word.endColumn
+            };
+
+            return {
+                suggestions: [
+
+                    // table
+                    {
+                        label: "table",
+                        kind: monaco.languages.CompletionItemKind.Variable,
+                        insertText: "table",
+                        range: range
+                    },
+
+                    // columns loop
+                    {
+                        label: "columns",
+                        kind: monaco.languages.CompletionItemKind.Variable,
+                        insertText: "columns",
+                        range: range
+                    },
+
+                    {
+                        label: "for column in columns",
+                        kind: monaco.languages.CompletionItemKind.Snippet,
+                        insertText:
+`{% for column in columns %}
+    {{ column.name }}
+{% endfor %}`,
+                        insertTextRules:
+                            monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+                        range: range
+                    },
+
+                    // column.name
+                    {
+                        label: "column.name",
+                        kind: monaco.languages.CompletionItemKind.Field,
+                        insertText: "column.name",
+                        range: range
+                    },
+
+                    {
+                        label: "column.type",
+                        kind: monaco.languages.CompletionItemKind.Field,
+                        insertText: "column.type",
+                        range: range
+                    },
+
+                    {
+                        label: "column.notnull",
+                        kind: monaco.languages.CompletionItemKind.Field,
+                        insertText: "column.notnull",
+                        range: range
+                    },
+
+                    {
+                        label: "column.pk",
+                        kind: monaco.languages.CompletionItemKind.Field,
+                        insertText: "column.pk",
+                        range: range
+                    },
+
+                    // if snippet
+                    {
+                        label: "if",
+                        kind: monaco.languages.CompletionItemKind.Snippet,
+                        insertText:
+`{% if condition %}
+    
+{% endif %}`,
+                        insertTextRules:
+                            monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+                        range: range
+                    },
+
+                    // for snippet
+                    {
+                        label: "for",
+                        kind: monaco.languages.CompletionItemKind.Snippet,
+                        insertText:
+`{% for item in list %}
+    
+{% endfor %}`,
+                        insertTextRules:
+                            monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+                        range: range
+                    },
+
+                    // variable output
+                    {
+                        label: "{{ }}",
+                        kind: monaco.languages.CompletionItemKind.Snippet,
+                        insertText: "{{ ${1:variable} }}",
+                        insertTextRules:
+                            monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+                        range: range
+                    }
+
+                ]
+            };
+
+        }
+
+    });
+
+}
+
+</script>
+
+{% endblock %}

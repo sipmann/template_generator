@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h2>Templates</h2>
+
+<a href="/templates/new">
+<button>Novo Template</button>
+</a>
+
+<br><br>
+
+<table border="1">
+
+<tr>
+<th>Nome</th>
+<th>Ações</th>
+</tr>
+
+{% for file in files %}
+
+<tr>
+<td>{{ file }}</td>
+
+<td>
+<a href="/templates/edit/{{ file }}">Editar</a>
+</td>
+
+</tr>
+
+{% endfor %}
+
+</table>
+
+{% endblock %}

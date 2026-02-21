@@ -1,0 +1,20 @@
+version: '3.9'
+
+services:
+  crud-generator:
+    build: .
+    volumes:
+      - ./template_storage:/app/template_storage
+      - ./database.db:/app/database.db
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.crudgen.rule=Host(`crudgen.local`)"
+      - "traefik.http.routers.crudgen.entrypoints=web"
+      - "traefik.http.services.crudgen.loadbalancer.server.port=5000"
+
+networks:
+    proxy:
+        external: true
+
