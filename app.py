@@ -79,6 +79,7 @@ def index():
 
     generated = None
     templates = os.listdir(TEMPLATE_STORAGE)
+    sql = ''
 
     if request.method == "POST":
 
@@ -100,7 +101,8 @@ def index():
     return render_template(
         "index.html",
         generated=generated,
-        templates=templates
+        templates=templates,
+        sql=sql
     )
 
 
