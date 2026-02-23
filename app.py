@@ -12,8 +12,15 @@ TEMPLATE_STORAGE = "template_storage"
 
 os.makedirs(TEMPLATE_STORAGE, exist_ok=True)
 
-def filter_out_ok(columns):
-    return [o for o in columns if not o.pk]
+def filter_out_pk(columns):
+    result = []
+    for o in columns:
+        if o["pk"] == 0:
+            result.append(o)
+    return result
+
+def snake_to_title(value: str) -> str:
+    return " ".join(word.capitalize() for word in value.split("_") if word)
 
 def get_conn():
     conn = sqlite3.connect(DB)
@@ -85,7 +92,8 @@ def index():
         generated = template.render(
             table=table,
             columns=columns,
-            #columns_no_pk=filter_out_ok(columns),
+            columns_no_pk=filter_out_pk(columns),
+            gen_label=snake_to_title,
             map_type=map_type
         )
 
