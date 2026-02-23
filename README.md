@@ -4,6 +4,6 @@ From time to time I have a simple CRUD to make, with small changes between them.
 
 # TODOs
 
-- [ ] Columns without PK (for less code in the template)
-- [ ] Snake_Case strings to proper Titles
+- [X] Columns without PK (for less code in the template)
+- [X] Snake_Case strings to proper Titles
 - [ ] Template Folder structure for better organization
