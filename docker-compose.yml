@@ -3,6 +3,7 @@ version: '3.9'
 services:
   crud-generator:
     build: .
+    restart: unless-stopped
     volumes:
       - ./template_storage:/app/template_storage
       - ./database.db:/app/database.db

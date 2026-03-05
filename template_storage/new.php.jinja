@@ -3,11 +3,11 @@
 include_once '../config.php';
 include_once '../utils/auth.php';
 
-function createRegistro({% for column in columns %}{% if column.pk %} {% continue %} {% endif %}${{column.name}}{% if not loop.last %}, {% endif %}{% endfor %}) : int {
+function createRegistro({% for column in columns_no_pk %}${{column.name}}{% if not loop.last %}, {% endif %}{% endfor %}) : int {
     $con = Mysql::conn();
-    $stm = $con->prepare('INSERT INTO {{table}} ({% for column in columns %}{% if column.pk %} {% continue %} {% endif %}{{column.name}}{% if not loop.last %}, {% endif %}{% endfor %}) VALUES ({% for column in columns %}{% if column.pk %} {% continue %} {% endif %}?{% if not loop.last %}, {% endif %}{% endfor %})');
+    $stm = $con->prepare('INSERT INTO {{table}} ({% for column in columns_no_pk %}{{column.name}}{% if not loop.last %}, {% endif %}{% endfor %}) VALUES ({% for column in columns_no_pk %}?{% if not loop.last %}, {% endif %}{% endfor %})');
 
-    $stm->bind_param('{% for column in columns %}{% if column.pk %} {% continue %} {% endif %}s{% endfor %}', {% for column in columns %}{% if column.pk %} {% continue %} {% endif %}${{column.name}}{% if not loop.last %}, {% endif %}{% endfor %});
+    $stm->bind_param('{% for column in columns_no_pk %}s{% endfor %}', {% for column in columns_no_pk %}${{column.name}}{% if not loop.last %}, {% endif %}{% endfor %});
     $stm->execute();
     return $stm->affected_rows;
 }
@@ -44,8 +44,7 @@ include_once '../Views/header.php';
     <?php } ?>
 
     <form method="POST">
-        {% for column in columns %}
-        {% if column.pk %} {% continue %} {% endif %}
+        {% for column in columns_no_pk %}
         <div class="mb-3">
             <label for="{{column.name}}" class="form-label">{{column.name}}</label>
             <input type="text" class="form-control" name="{{column.name}}" id="{{column.name}}" value="<?=oldValue('{{column.name}}', '')?>" {% if column.notnull %} required {% endif %}>
