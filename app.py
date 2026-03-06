@@ -19,8 +19,51 @@ def filter_out_pk(columns):
             result.append(o)
     return result
 
+ACCENT_FIX = {
+    "acao": "ação",
+    "acoes": "ações",
+    "descricao": "descrição",
+    "situacao": "situação",
+    "informacao": "informação",
+    "informacoes": "informações",
+    "numero": "número",
+    "usuario": "usuário",
+    "usuarios": "usuários",
+    "endereco": "endereço",
+    "telefones": "telefones",
+    "telefone": "telefone",
+    "data": "data",
+    "nome": "nome",
+    "observacao": "observação",
+    "observacoes": "observações"
+}
+
+def ptbr_accent(word: str) -> str:
+    w = word.lower()
+
+    if w in ACCENT_FIX:
+        return ACCENT_FIX[w]
+
+    if w.endswith("cao"):
+        return w[:-3] + "ção"
+
+    if w.endswith("coes"):
+        return w[:-4] + "ções"
+
+    return w
+
+
 def snake_to_title(value: str) -> str:
-    return " ".join(word.capitalize() for word in value.split("_") if word)
+    words = []
+
+    for w in value.split("_"):
+        if not w:
+            continue
+
+        w = ptbr_accent(w)
+        words.append(w.capitalize())
+
+    return " ".join(words)
 
 def get_conn():
     conn = sqlite3.connect(DB)
@@ -28,19 +71,16 @@ def get_conn():
     return conn
 
 
-def extract_table_name(sql):
+def extract_table_name(sql: str) -> str:
     match = re.search(r"create table\s+(\w+)", sql, re.IGNORECASE)
     return match.group(1)
 
 
 def introspect(sql):
-
     conn = get_conn()
-
     conn.executescript(sql)
 
     table = extract_table_name(sql)
-
     columns = conn.execute(
         f"PRAGMA table_info({table})"
     ).fetchall()
@@ -51,7 +91,6 @@ def introspect(sql):
 
 
 def map_type(sqlite_type):
-
     t = sqlite_type.upper()
 
     if "INT" in t:
