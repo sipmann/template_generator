@@ -30,10 +30,6 @@ ACCENT_FIX = {
     "usuario": "usuário",
     "usuarios": "usuários",
     "endereco": "endereço",
-    "telefones": "telefones",
-    "telefone": "telefone",
-    "data": "data",
-    "nome": "nome",
     "observacao": "observação",
     "observacoes": "observações"
 }
