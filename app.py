@@ -1,206 +1,82 @@
-import sqlite3
-import re
-import os
+from flask import Flask, redirect, render_template, request, url_for
 
-from flask import Flask, render_template, request, redirect, url_for
-from jinja2 import Environment, FileSystemLoader
+from template_generator.core import (
+    DEFAULT_TEMPLATE_CONTENT,
+    generate_from_sql,
+    list_template_names,
+    read_template,
+    write_template,
+)
+
 
 app = Flask(__name__)
-
-DB = ":memory:"
-TEMPLATE_STORAGE = "template_storage"
-
-os.makedirs(TEMPLATE_STORAGE, exist_ok=True)
-
-def filter_out_pk(columns):
-    result = []
-    for o in columns:
-        if o["pk"] == 0:
-            result.append(o)
-    return result
-
-ACCENT_FIX = {
-    "acao": "ação",
-    "acoes": "ações",
-    "descricao": "descrição",
-    "situacao": "situação",
-    "informacao": "informação",
-    "informacoes": "informações",
-    "numero": "número",
-    "usuario": "usuário",
-    "usuarios": "usuários",
-    "endereco": "endereço",
-    "observacao": "observação",
-    "observacoes": "observações"
-}
-
-def ptbr_accent(word: str) -> str:
-    w = word.lower()
-
-    if w in ACCENT_FIX:
-        return ACCENT_FIX[w]
-
-    if w.endswith("cao"):
-        return w[:-3] + "ção"
-
-    if w.endswith("coes"):
-        return w[:-4] + "ções"
-
-    return w
-
-
-def snake_to_title(value: str) -> str:
-    words = []
-
-    for w in value.split("_"):
-        if not w:
-            continue
-
-        w = ptbr_accent(w)
-        words.append(w.capitalize())
-
-    return " ".join(words)
-
-def get_conn():
-    conn = sqlite3.connect(DB)
-    conn.row_factory = sqlite3.Row
-    return conn
-
-
-def extract_table_name(sql: str) -> str:
-    match = re.search(r"create table\s+(\w+)", sql, re.IGNORECASE)
-    return match.group(1)
-
-
-def introspect(sql):
-    conn = get_conn()
-    conn.executescript(sql)
-
-    table = extract_table_name(sql)
-    columns = conn.execute(
-        f"PRAGMA table_info({table})"
-    ).fetchall()
-
-    conn.close()
-
-    return table, columns
-
-
-def map_type(sqlite_type):
-    t = sqlite_type.upper()
-
-    if "INT" in t:
-        return "number"
-
-    if "REAL" in t or "DECIMAL" in t or "FLOAT" in t:
-        return "number"
-
-    if "DATE" in t:
-        return "date"
-
-    return "text"
-
-
-generator_env = Environment(
-    loader=FileSystemLoader(TEMPLATE_STORAGE),
-    trim_blocks=True,
-    lstrip_blocks=True,
-    extensions=["jinja2.ext.loopcontrols"],
-)
 
 
 @app.route("/", methods=["GET", "POST"])
 def index():
-
     generated = None
-    templates = os.listdir(TEMPLATE_STORAGE)
-    sql = ''
+    templates = list_template_names()
+    sql = ""
 
     if request.method == "POST":
-
         sql = request.form["sql"]
         template_name = request.form["template"]
-
-        table, columns = introspect(sql)
-
-        template = generator_env.get_template(template_name)
-
-        generated = template.render(
-            table=table,
-            columns=columns,
-            columns_no_pk=filter_out_pk(columns),
-            gen_label=snake_to_title,
-            map_type=map_type
-        )
+        _, generated = generate_from_sql(sql, template_name)
 
     return render_template(
         "index.html",
         generated=generated,
         templates=templates,
-        sql=sql
+        sql=sql,
     )
 
 
 @app.route("/templates")
 def templates_list():
-
-    files = os.listdir(TEMPLATE_STORAGE)
-
     return render_template(
         "templates_list.html",
-        files=files
+        files=list_template_names(),
     )
 
 
 @app.route("/templates/new", methods=["GET", "POST"])
 def new_template():
-
     if request.method == "POST":
-
-        name = request.form["name"].strip()
-
-        if not name.endswith(".jinja"):
-            name += ".jinja"
-
-        path = os.path.join(TEMPLATE_STORAGE, name)
-
-        if os.path.exists(path):
-            return "Template já existe", 400
-
-        with open(path, "w") as f:
-            f.write("""<h2>{{ table }}</h2>
-
-{% for col in columns %}
-{{ col.name }}
-{% endfor %}
-""")
+        try:
+            name = write_template(
+                request.form["name"],
+                DEFAULT_TEMPLATE_CONTENT,
+                overwrite=False,
+            )
+        except FileExistsError:
+            return "Template ja existe", 400
+        except ValueError as error:
+            return str(error), 400
 
         return redirect(url_for("edit_template", name=name))
 
     return render_template("template_new.html")
 
 
-@app.route("/templates/edit/<name>", methods=["GET", "POST"])
+@app.route("/templates/edit/<path:name>", methods=["GET", "POST"])
 def edit_template(name):
-
-    path = os.path.join(TEMPLATE_STORAGE, name)
-
     if request.method == "POST":
-
-        content = request.form["content"]
-
-        with open(path, "w") as f:
-            f.write(content)
+        try:
+            write_template(name, request.form["content"])
+        except ValueError as error:
+            return str(error), 400
 
         return redirect(url_for("templates_list"))
 
-    with open(path) as f:
-        content = f.read()
+    try:
+        content = read_template(name)
+    except ValueError as error:
+        return str(error), 400
 
     return render_template(
         "template_edit.html",
         name=name,
-        content=content
+        content=content,
     )
 
 

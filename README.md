@@ -6,4 +6,10 @@ From time to time I have a simple CRUD to make, with small changes between them.
 
 - [X] Columns without PK (for less code in the template)
 - [X] Snake_Case strings to proper Titles
-- [ ] Template Folder structure for better organization
+- [X] Template Folder structure for better organization
+
+# Structure
+
+- `app.py`: Flask web interface.
+- `mcp_server.py`: MCP tools interface.
+- `template_generator/core.py`: shared SQL introspection, template storage, and rendering logic.
